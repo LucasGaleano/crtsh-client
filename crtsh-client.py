@@ -1,3 +1,4 @@
+from time import sleep
 from pycrtsh import Crtsh
 from loggingHelper import logger
 import datetime
@@ -28,25 +29,27 @@ domains = ['edgeuno.net', 'edgeuno.com']
 
 logger.info("Starting crtsh client.")
 
-certs = c.search("edgeuno.net")
-certs = expand_duplicate(certs)
+while True:
 
-yesterday = datetime.date.today() - datetime.timedelta(days=1)
-yesterdayCerts = [cert for cert in certs if sameday(cert['logged_at'], yesterday)]
-for cert in yesterdayCerts:
-    logger.info(createLog(cert, messageNewCertificate))
+    certs = c.search("edgeuno.net")
+    certs = expand_duplicate(certs)
 
-lastestCert = []
-domains = []
-dateBeforeExpired = datetime.datetime.today() - datetime.timedelta(days=-DAYS_BEFORE_EXPIRED)
-for cert in certs:
-    certName = cert['name']
-    if certName not in domains:
-        domains.append(certName)
-        lastestCert.append(cert)      
-        if datetime.datetime.today() < cert['not_after'] < dateBeforeExpired:
-            logger.info(createLog(cert, messageAboutToExpire))
-        if cert['not_after'] < datetime.datetime.today():
-            logger.info(createLog(cert, messageExpiredCertificate))
+    yesterday = datetime.date.today() - datetime.timedelta(days=1)
+    yesterdayCerts = [cert for cert in certs if sameday(cert['logged_at'], yesterday)]
+    for cert in yesterdayCerts:
+        logger.info(createLog(cert, messageNewCertificate))
 
+    lastestCert = []
+    domains = []
+    dateBeforeExpired = datetime.datetime.today() - datetime.timedelta(days=-DAYS_BEFORE_EXPIRED)
+    for cert in certs:
+        certName = cert['name']
+        if certName not in domains:
+            domains.append(certName)
+            lastestCert.append(cert)      
+            if datetime.datetime.today() < cert['not_after'] < dateBeforeExpired:
+                logger.info(createLog(cert, messageAboutToExpire))
+            if cert['not_after'] < datetime.datetime.today():
+                logger.info(createLog(cert, messageExpiredCertificate))
+    sleep(60*60*24)
 
