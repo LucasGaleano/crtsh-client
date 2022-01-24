@@ -10,7 +10,13 @@ messageAboutToExpire = 'Domain certification about to expired'
 messageExpiredCertificate = 'Domain certification expired'
 
 def createLog(cert, message):
-    return f"ID=\"{cert['id']}\" Logged At=\"{cert['logged_at']}\" Not Before=\"{cert['not_before']}\" Not After=\"{cert['not_after']}\" Common Name=\"{cert['name']}\" Issuer Name=\"{cert['ca']['name']}\" Message=\"{message}\""
+    id = cert['id']
+    loggedAt = cert['logged_at']
+    notBefore = cert['not_before']
+    notAfter = cert['not_after']
+    commonName = cert['name'].replace('"','')
+    issuerName = cert['ca']['name'].replace('"','')
+    return f"ID=\"{id}\" Logged At=\"{loggedAt}\" Not Before=\"{notBefore}\" Not After=\"{notAfter}\" Common Name=\"{commonName}\" Issuer Name=\"{issuerName}\" Message=\"{message}\""
 
 def sameday(date1, date2):
     return date1.day == date2.day and date1.month == date2.month and date1.year == date2.year
