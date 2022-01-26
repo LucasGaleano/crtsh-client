@@ -1,13 +1,19 @@
+import json
 from time import sleep
 from pycrtsh import Crtsh
 from loggingHelper import logger
 import datetime
+import configparser
 
-DAYS_BEFORE_EXPIRED = 20
+
 
 messageNewCertificate = 'Domain certification created'
 messageAboutToExpire = 'Domain certification about to expired'
 messageExpiredCertificate = 'Domain certification expired'
+
+config = configparser.ConfigParser()
+config.read('crtsh.conf')
+DAYS_BEFORE_EXPIRED = int(config.get('Config','daysBeforeExpire'))
 
 def createLog(cert, message):
     id = cert['id']
@@ -30,21 +36,13 @@ def expand_duplicate(c):
             certs.append(aux)
     return certs
 
-c = Crtsh()
-domains = ['edgeuno.net', 'edgeuno.com']
-
-logger.info("Starting crtsh client.")
-
-while True:
-
-    certs = c.search("edgeuno.net")
-    certs = expand_duplicate(certs)
-
+def new_certificates_create(certs):
     yesterday = datetime.date.today() - datetime.timedelta(days=1)
     yesterdayCerts = [cert for cert in certs if sameday(cert['logged_at'], yesterday)]
     for cert in yesterdayCerts:
         logger.info(createLog(cert, messageNewCertificate))
 
+def certificate_expires(certs):
     lastestCert = []
     domains = []
     dateBeforeExpired = datetime.datetime.today() - datetime.timedelta(days=-DAYS_BEFORE_EXPIRED)
@@ -57,5 +55,18 @@ while True:
                 logger.info(createLog(cert, messageAboutToExpire))
             if cert['not_after'] < datetime.datetime.today():
                 logger.info(createLog(cert, messageExpiredCertificate))
+
+c = Crtsh()
+domains = config.get('Config','domains').split(',')
+
+logger.info("Starting crtsh client.")
+
+while True:
+    for domain in domains:
+        certs = c.search(domain)
+        certs = expand_duplicate(certs)
+
+        new_certificates_create(certs)
+        certificate_expires(certs)
     sleep(60*60*24)
 
