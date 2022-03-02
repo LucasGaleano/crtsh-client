@@ -62,11 +62,14 @@ domains = config.get('Config','domains').split(',')
 logger.info("Starting crtsh client.")
 
 while True:
-    for domain in domains:
-        certs = c.search(domain)
-        certs = expand_duplicate(certs)
+    try:
+        for domain in domains:
+            certs = c.search(domain)
+            certs = expand_duplicate(certs)
 
-        new_certificates_create(certs)
-        certificate_expires(certs)
+            new_certificates_create(certs)
+            certificate_expires(certs)
+    except Exception as e:
+        print(f"[-] Error: {e}")
     sleep(60*60*24)
 
