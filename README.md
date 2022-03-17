@@ -11,7 +11,7 @@ daysBeforeExpire = 10
 
 ```
 ## What it does
-checks the crt.sh page every day and records when a new certificate is created, is about to expire according to the variable "daysBeforeExpire" or has already expired.
+Checks the crt.sh page every day and records when a new certificate is created, is about to expire according to the variable "daysBeforeExpire" or has already expired.
 
 ## Logging
 The script will log all the events to /var/log/syslog and stdout as a syslog format.
