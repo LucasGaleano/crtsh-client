@@ -15,6 +15,9 @@ config = configparser.ConfigParser()
 config.read('crtsh.conf')
 DAYS_BEFORE_EXPIRED = int(config.get('Config','daysBeforeExpire'))
 
+c = Crtsh()
+domains = config.get('Config','domains').split(',')
+
 def createLog(cert, message):
     id = cert['id']
     loggedAt = cert['logged_at']
@@ -28,6 +31,9 @@ def sameday(date1, date2):
     return date1.day == date2.day and date1.month == date2.month and date1.year == date2.year
 
 def expand_duplicate(c):
+    """
+    Separates the certificates with more than 1 domain in diferents logs.
+    """
     certs = []
     for cert in c:
         for certName in cert['name'].split('\n'):
@@ -37,15 +43,21 @@ def expand_duplicate(c):
     return certs
 
 def new_certificates_create(certs):
+    """
+    Checks the diff between the day before and logs any new certificate. 
+    """
     yesterday = datetime.date.today() - datetime.timedelta(days=1)
     yesterdayCerts = [cert for cert in certs if sameday(cert['logged_at'], yesterday)]
     for cert in yesterdayCerts:
         logger.info(createLog(cert, messageNewCertificate))
 
-def certificate_expires(certs):
+def certificate_expires(certs, daysBeforeExpire):
+    """
+    Get all the latest certificates on the list and reports the ones with more than x days.
+    """
     lastestCert = []
     domains = []
-    dateBeforeExpired = datetime.datetime.today() - datetime.timedelta(days=-DAYS_BEFORE_EXPIRED)
+    dateBeforeExpired = datetime.datetime.today() - datetime.timedelta(days=-daysBeforeExpire)
     for cert in certs:
         certName = cert['name']
         if certName not in domains:
@@ -56,8 +68,7 @@ def certificate_expires(certs):
             if cert['not_after'] < datetime.datetime.today():
                 logger.info(createLog(cert, messageExpiredCertificate))
 
-c = Crtsh()
-domains = config.get('Config','domains').split(',')
+
 
 logger.info("Starting crtsh client.")
 
@@ -66,10 +77,10 @@ while True:
         for domain in domains:
             certs = c.search(domain)
             certs = expand_duplicate(certs)
-
             new_certificates_create(certs)
-            certificate_expires(certs)
+            certificate_expires(certs, DAYS_BEFORE_EXPIRED)
     except Exception as e:
         print(f"[-] Error: {e}")
+        
     sleep(60*60*24)
 
